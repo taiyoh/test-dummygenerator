@@ -9,35 +9,16 @@ has num => (
     required => 1,
 );
 
-has sr => (
-    is      => 'ro',
-    isa     => 'String::Random',
-    lazy    => 1,
-    default => sub {
-        require String::Random;
-        String::Random->new;
-    }
-);
-
 no Mouse;
+
+our $Rules = {};
 
 sub _generate_string {
     my $self = shift;
     my $data = shift;
     local $_ = $self->num;
-    if ( $data =~ /__str\((.+?)\)__/ ) {
-        return $self->sr->randregex($1);
-    }
-    elsif ( $data =~ /__rand\((.+?)\)__/ ) {
-        return int(rand $1) + 1;
-    }
-    elsif ( $data =~ /__exp\((.+?)\)__/ ) {
-        (my $exp = $1) =~ s/_/$_/g;
-        return eval $exp;
-    }
-    elsif ( $data =~ /__range\((\d+?),(\d+?)\)__/ ) {
-        my $r = $2 - $1 + 1;
-        return int(rand($r)) + $1;
+    for my $k ( keys %$Rules ) {
+        return $Rules->{$k}->($1) if $data =~ /__${k}\((.+?)\)__/;
     }
     return $data;
 }

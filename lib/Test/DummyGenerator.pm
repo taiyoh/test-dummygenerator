@@ -5,6 +5,11 @@ use utf8;
 
 use Test::DummyGenerator::Hash;
 
+sub import {
+    my $class = shift;
+    $class->load_rules(@_);
+}
+
 our $VERSION = '0.001';
 
 has schema => (
@@ -24,11 +29,27 @@ has file => (
 sub BUILD {
     my $self = shift;
     unless ( $self->schema ) {
-        $self->load_file or die;
+        $self->load_file or die 'schema not found ...';
     }
 }
 
 no Mouse;
+
+sub load_rules {
+    my $class = shift;
+    my $tdgr = 'Test::DummyGenerator::Rule';
+	
+    for ('Default', (@_ || ())) {
+        my $rule;
+        if (/^\+/) {
+            ( $rule = $_ ) =~ s/^\+//;
+        }
+        else {
+            $rule = join '::', ( $tdgr, $_ );
+        }
+        Mouse::load_class($rule) if !Mouse::is_class_loaded($rule);
+    }
+}
 
 sub load_file {
     my $self = shift;
@@ -45,7 +66,8 @@ sub generate {
     my $self = shift;
     my $loop = shift || 1;
     my @datas = map {
-        Test::DummyGenerator::Hash->new( schema => $self->schema, num => $_ )->generate;
+        my $dg = Test::DummyGenerator::Hash->new( schema => $self->schema, num => $_ );
+        $dg->generate;
     } ( 1 .. $loop );
     return wantarray ? @datas : ( $datas[1] ? \@datas : $datas[0] );
 }
