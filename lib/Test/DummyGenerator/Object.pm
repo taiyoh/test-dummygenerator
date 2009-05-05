@@ -1,7 +1,6 @@
-package Test::DummyGenerator::Hash;
+package Test::DummyGenerator::Object;
 
-use Mouse;
-extends 'Test::DummyGenerator';
+use Any::Moose;
 
 has num => (
     is => 'ro',
@@ -9,16 +8,20 @@ has num => (
     required => 1,
 );
 
-no Mouse;
+has schema => (
+    is => 'ro',
+    isa => 'HashRef',
+    required => 1,
+);
 
-our $Rules = {};
+no Any::Moose;
 
 sub _generate_string {
     my $self = shift;
     my $data = shift;
     local $_ = $self->num;
-    for my $k ( keys %$Rules ) {
-        return $Rules->{$k}->($1) if $data =~ /__${k}\((.+?)\)__/;
+    for my $k ( keys %{$Test::DummyGenerator::Rules} ) {
+        return $Test::DummyGenerator::Rules->{$k}->($1) if $data =~ /__${k}\((.+?)\)__/;
     }
     return $data;
 }

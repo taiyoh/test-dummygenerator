@@ -1,16 +1,12 @@
 package Test::DummyGenerator;
-
-use Mouse;
 use utf8;
 
-use Test::DummyGenerator::Hash;
+use Any::Moose;
 
 sub import {
-    my $class = shift;
-    $class->load_rules(@_);
+    my $pkg = shift;
+    $pkg->load_rules(@_);
 }
-
-our $VERSION = '0.001';
 
 has schema => (
     is => 'rw',
@@ -33,13 +29,18 @@ sub BUILD {
     }
 }
 
-no Mouse;
+no Any::Moose;
+
+our $VERSION = '0.001';
+
+our $Rules = {};
 
 sub load_rules {
     my $class = shift;
     my $tdgr = 'Test::DummyGenerator::Rule';
-	
-    for ('Default', (@_ || ())) {
+    my @rules = @_;
+    unshift @rules, 'Default';
+    for (@rules) {
         my $rule;
         if (/^\+/) {
             ( $rule = $_ ) =~ s/^\+//;
@@ -47,14 +48,15 @@ sub load_rules {
         else {
             $rule = join '::', ( $tdgr, $_ );
         }
-        Mouse::load_class($rule) if !Mouse::is_class_loaded($rule);
+        Any::Moose::load_class($rule) if !Any::Moose::is_class_loaded($rule);
     }
 }
 
 sub load_file {
     my $self = shift;
     return '' if !$self->file || !-f $self->file;
-    Mouse::load_class('YAML') if !Mouse::is_class_loaded('YAML');
+    Any::Moose::load_class('YAML') if !Any::Moose::is_class_loaded('YAML');
+    no warnings 'once';
     local $YAML::UseAliases = 0;
     my $yaml = eval { YAML::Dump( YAML::LoadFile( $self->file ) ) };
     return '' if $@;
@@ -65,11 +67,13 @@ sub load_file {
 sub generate {
     my $self = shift;
     my $loop = shift || 1;
-    my @datas = map {
-        my $dg = Test::DummyGenerator::Hash->new( schema => $self->schema, num => $_ );
+    my $tdgo = 'Test::DummyGenerator::Object';
+    Any::Moose::load_class($tdgo) if !Any::Moose::is_class_loaded($tdgo);
+    my @data_list = map {
+        my $dg = $tdgo->new( schema => $self->schema, num => $_ );
         $dg->generate;
     } ( 1 .. $loop );
-    return wantarray ? @datas : ( $datas[1] ? \@datas : $datas[0] );
+    return wantarray ? @data_list : ( $data_list[1] ? \@data_list : $data_list[0] );
 }
 
 1;

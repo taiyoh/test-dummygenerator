@@ -2,6 +2,7 @@ package Test::DummyGenerator::Rule::Default;
 
 use Test::DummyGenerator::Rule;
 
+use DateTime;
 use String::Random;
 my $sr = String::Random->new;
 
@@ -16,11 +17,10 @@ rule exp => sub {
 
 rule range => sub {
     (my $arg_str = $_[0]) =~ s/\s//g;
-    my @a = split ',', $arg_str;
-    return int(rand($a[1] - $a[0] + 1)) + $a[0];
+    my ($min, $max) = (split ',', $arg_str);
+    return int(rand($max - $min + 1)) + $min;
 };
 
-use DateTime;
 rule add => sub {
     my $d = DateTime->now->set_time_zone('Asia/Tokyo')->add( eval $_[0] );
     my $ymd = $d->ymd;

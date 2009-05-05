@@ -1,19 +1,12 @@
 package Test::DummyGenerator::Rule;
 
-use Mouse;
-extends 'Mouse::Role';
+use Exporter 'import';
+our @EXPORT = 'rule';
 
-sub import {
-    my $class = shift;
-    my $pkg   = caller(0);
-    no strict 'refs';
-    *{"${pkg}::rule"} = \&rule;
-    __PACKAGE__->export_to_level(1, @_);
-}
-
-sub rule {
+sub rule($&) {
     my ( $key, $code ) = @_;
-    $Test::DummyGenerator::Hash::Rules->{$key} = $code;
+    no warnings 'once';
+    $Test::DummyGenerator::Rules->{$key} = $code;
 }
 
 1;
