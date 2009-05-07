@@ -21,9 +21,11 @@ sub _generate_string {
     my $data = shift;
     local $_ = $self->num;
     for my $k ( keys %{$Test::DummyGenerator::Rules} ) {
-        return $Test::DummyGenerator::Rules->{$k}->($1) if $data =~ /__${k}\((.+?)\)__/;
+        if ( $data =~ /__${k}\((.+?)\)__/ ) {
+            return $Test::DummyGenerator::Rules->{$k}->($1);
+        }
     }
-    return $data;
+    return eval $data;
 }
 
 sub generate {

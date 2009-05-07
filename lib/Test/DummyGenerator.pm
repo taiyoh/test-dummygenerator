@@ -35,6 +35,17 @@ our $VERSION = '0.001';
 
 our $Rules = {};
 
+sub add_rule {
+    my $pkg;
+    $pkg = shift if ref $_[0] && ref $_[0] eq 'Test::DummyGenerator';
+    if (@_ % 2 == 0) {
+        my %d = @_;
+        while(my ($key, $code) = each %d) {
+            $Rules->{$key} = $code;
+        }
+    }
+}
+
 sub load_rules {
     my $class = shift;
     my $tdgr = 'Test::DummyGenerator::Rule';
@@ -52,6 +63,7 @@ sub load_rules {
     }
 }
 
+# if you use different format, pls redefine this
 sub load_file {
     my $self = shift;
     return '' if !$self->file || !-f $self->file;
